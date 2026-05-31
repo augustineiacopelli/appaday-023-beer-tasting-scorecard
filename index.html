@@ -79,8 +79,8 @@
   .btn-secondary:active{border-color:var(--amber);color:var(--amber);}
   .empty-queue{text-align:center;padding:24px 0 8px;color:var(--muted);font-size:0.88rem;}
   .add-beer-fields{display:flex;flex-direction:column;gap:8px;margin-top:20px;}
-  .add-field-row{display:flex;gap:8px;}
-  .add-field-row .beer-input{flex:1;}
+  .add-field-row{display:flex;flex-direction:column;gap:8px;}
+  .add-field-row .beer-input{width:100%;}
   .btn-add-full{background:var(--amber);color:#1a1208;border:none;border-radius:var(--radius);padding:13px 18px;font-family:'DM Sans',sans-serif;font-size:0.95rem;font-weight:500;cursor:pointer;width:100%;transition:background 0.15s;}
   .btn-add-full:active{background:var(--amber-light);}
 
@@ -101,6 +101,9 @@
   .lookup-heading{font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--amber);margin-bottom:10px;font-weight:500;}
   .lookup-content{font-size:0.88rem;color:var(--cream);line-height:1.65;font-weight:300;}
   .lookup-content strong{color:var(--amber-light);font-weight:500;}
+  .lookup-sources{margin-top:10px;padding-top:8px;border-top:1px solid var(--border);font-size:0.78rem;color:var(--muted);}
+  .lookup-sources a{color:var(--amber);text-decoration:none;}
+  .lookup-sources a:hover{text-decoration:underline;}
 
   .attributes{display:flex;flex-direction:column;gap:22px;}
   .attr-label{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;}
@@ -121,6 +124,7 @@
   .total-display .label{font-size:0.8rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);}
   .total-display .score{font-family:'Playfair Display',serif;font-size:2rem;color:var(--amber-light);}
   .total-display .score span{font-size:1rem;color:var(--muted);font-family:'DM Sans',sans-serif;}
+  .mug-display{font-size:1.3rem;margin-top:4px;letter-spacing:2px;}
   .score-actions{display:flex;flex-direction:column;gap:10px;margin-top:16px;padding-bottom:40px;}
 
   /* RESULTS */
@@ -266,12 +270,16 @@
       <div class="slider-track"><div class="slider-fill" id="fill-aroma" style="width:44.4%"></div><input type="range" min="1" max="10" value="5" id="slider-aroma" oninput="updateSlider('aroma',this.value)"></div>
     </div>
     <div class="attr-block">
-      <div class="attr-label"><span class="attr-name">Taste</span><span class="attr-value" id="val-taste">5</span></div>
-      <div class="slider-track"><div class="slider-fill" id="fill-taste" style="width:44.4%"></div><input type="range" min="1" max="10" value="5" id="slider-taste" oninput="updateSlider('taste',this.value)"></div>
+      <div class="attr-label"><span class="attr-name">Flavor</span><span class="attr-value" id="val-flavor">5</span></div>
+      <div class="slider-track"><div class="slider-fill" id="fill-flavor" style="width:44.4%"></div><input type="range" min="1" max="10" value="5" id="slider-flavor" oninput="updateSlider('flavor',this.value)"></div>
     </div>
     <div class="attr-block">
-      <div class="attr-label"><span class="attr-name">Finish</span><span class="attr-value" id="val-finish">5</span></div>
-      <div class="slider-track"><div class="slider-fill" id="fill-finish" style="width:44.4%"></div><input type="range" min="1" max="10" value="5" id="slider-finish" oninput="updateSlider('finish',this.value)"></div>
+      <div class="attr-label"><span class="attr-name">Mouthfeel</span><span class="attr-value" id="val-mouthfeel">5</span></div>
+      <div class="slider-track"><div class="slider-fill" id="fill-mouthfeel" style="width:44.4%"></div><input type="range" min="1" max="10" value="5" id="slider-mouthfeel" oninput="updateSlider('mouthfeel',this.value)"></div>
+    </div>
+    <div class="attr-block">
+      <div class="attr-label"><span class="attr-name">Overall Impression</span><span class="attr-value" id="val-overall">5</span></div>
+      <div class="slider-track"><div class="slider-fill" id="fill-overall" style="width:44.4%"></div><input type="range" min="1" max="10" value="5" id="slider-overall" oninput="updateSlider('overall',this.value)"></div>
     </div>
   </div>
   <div class="notes-block">
@@ -280,7 +288,10 @@
   </div>
   <div class="total-display">
     <span class="label">Total Score</span>
-    <span class="score" id="total-score">20 <span>/ 40</span></span>
+    <div style="text-align:right">
+      <div class="score" id="total-score">25 <span>/ 50</span></div>
+      <div class="mug-display" id="mug-display">🍺🍺🍺🍺🍺</div>
+    </div>
   </div>
   <div class="score-actions">
     <button class="btn-primary" id="btn-next" onclick="saveBeer()">Next Beer →</button>
@@ -321,7 +332,7 @@
 </div>
 
 <script>
-const ATTRS=['appearance','aroma','taste','finish'];
+const ATTRS=['appearance','aroma','flavor','mouthfeel','overall'];
 const MEDALS=['🥇','🥈','🥉','4','5'];
 const MEDAL_CLASS=['gold','silver','bronze','',''];
 const STORAGE_KEY='beertasting_log_v1';
@@ -429,7 +440,7 @@ function toRoman(n){const r=['I','II','III','IV','V','VI','VII','VIII','IX','X']
 // ── TASTING ──
 function startTasting(){
   if(beers.length===0)return;
-  scores=beers.map(()=>({appearance:5,aroma:5,taste:5,finish:5,notes:''}));
+  scores=beers.map(()=>({appearance:5,aroma:5,flavor:5,mouthfeel:5,overall:5,notes:''}));
   lookupCache={};currentIndex=0;
   buildDots();loadBeer(0);showScreen('screen-score');
 }
@@ -466,7 +477,7 @@ async function lookupBeer(){
       method:'POST',
       headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
       body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:400,
-        system:'You are a knowledgeable craft beer sommelier. When given a beer or brewery name, provide a concise tasting guide in HTML using <strong> for labels only. Cover: style, typical ABV, appearance, aroma, taste, and finish. Be specific and evocative. 4-5 sentences. No preamble, no markdown, no backtick fences.',
+        system:'You are a knowledgeable craft beer sommelier. When given a beer or brewery name, provide a tasting guide in HTML. Structure it with these labeled lines, each on its own line using <br> after each one: <strong>Style:</strong> ...<br> <strong>ABV:</strong> ...<br> <strong>Appearance:</strong> ...<br> <strong>Aroma:</strong> ...<br> <strong>Flavor:</strong> ...<br> <strong>Mouthfeel:</strong> ...<br> <strong>Overall:</strong> ...<br> Then end with a <div class=\"lookup-sources\">Sources: followed by 1-3 hyperlinks to real authoritative sources (brewery website, BeerAdvocate, RateBeer, BJCP, CraftBeer.com) using <a href=\"URL\" target=\"_blank\">Name</a> format, then </div>. No preamble, no markdown, no backtick fences. Use only HTML.',
         messages:[{role:'user',content:'Tell me about: '+beerName}]})
     });
     const data=await response.json();
@@ -490,7 +501,10 @@ function updateSlider(attr,val){
 
 function updateTotal(){
   const s=scores[currentIndex];if(!s)return;
-  document.getElementById('total-score').innerHTML=ATTRS.reduce((sum,a)=>sum+s[a],0)+' <span>/ 40</span>';
+  const total=ATTRS.reduce((sum,a)=>sum+s[a],0);
+  document.getElementById('total-score').innerHTML=total+' <span>/ 50</span>';
+  const mugs=Math.round((total/50)*5);
+  document.getElementById('mug-display').textContent='🍺'.repeat(mugs)+'🫙'.repeat(5-mugs);
 }
 
 function saveBeer(){
@@ -516,7 +530,9 @@ function renderPodium(ranked,container){
     const card=document.createElement('div');card.className='result-card '+(MEDAL_CLASS[rank]||'');
     const attrHtml=ATTRS.map(a=>`<span class="result-attr">${a.charAt(0).toUpperCase()+a.slice(1)}: ${beer.scores[a]}</span>`).join('');
     const notesHtml=beer.scores.notes?`<div class="result-notes">"${beer.scores.notes}"</div>`:'';
-    card.innerHTML=`<div class="rank-badge">${MEDALS[rank]||(rank+1)}</div><div class="result-info"><div class="result-name">${beer.name}</div><div class="result-bars">${attrHtml}</div>${notesHtml}</div><div class="result-score">${beer.total}<span>/40</span></div>`;
+    const mugCount=Math.round((beer.total/50)*5);
+    const mugsHtml='🍺'.repeat(mugCount)+'🫙'.repeat(5-mugCount);
+    card.innerHTML=`<div class="rank-badge">${MEDALS[rank]||(rank+1)}</div><div class="result-info"><div class="result-name">${beer.name}</div><div class="result-bars">${attrHtml}</div>${notesHtml}</div><div style="text-align:right;flex-shrink:0"><div class="result-score">${beer.total}<span>/50</span></div><div style="font-size:1rem;letter-spacing:1px">${mugsHtml}</div></div>`;
     container.appendChild(card);
   });
 }
