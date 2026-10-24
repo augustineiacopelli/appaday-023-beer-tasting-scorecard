@@ -10,6 +10,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <link rel="manifest" href="https://augustineiacopelli.github.io/appaday/manifests/023.webmanifest">
 <script src="https://augustineiacopelli.github.io/appaday/save.js" defer></script>
+<script src="https://augustineiacopelli.github.io/appaday/keys.js" data-app="023" data-legacy-key="beertasting_settings_v1:apiKey" data-accent="#289664" defer></script>
 <title>Beer Tasting Scorecard | AppADay 023</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
@@ -219,12 +220,7 @@
       <input type="text" class="modal-input" id="settings-session-name" placeholder="e.g. Wichita Homebrewers Bus Tour…" maxlength="60">
       <div class="field-hint">This name is used for every tasting session until you change it. Saved locally on this device.</div>
     </div>
-    <div class="field-group">
-      <label class="field-label">Claude API Key</label>
-      <input type="password" class="modal-input" id="settings-api-key" placeholder="sk-ant-…" autocomplete="off" oninput="checkSettingsKey()">
-      <div class="api-status none" id="settings-api-status">Not set — beer lookup will be unavailable</div>
-      <div class="field-hint">Stored in localStorage on this device only. Never committed or sent anywhere except the Anthropic API.</div>
-    </div>
+    <div class="field-group"><div id="keyMount"><div class="field-hint">The key manager is loading. If this stays, check your connection and reload.</div></div></div>
     <button class="btn-save" onclick="saveSettings()">Save Settings</button>
   </div>
 </div>
@@ -345,14 +341,13 @@ const MEDAL_CLASS=['gold','silver','bronze','',''];
 const STORAGE_KEY='beertasting_log_v1';
 const SETTINGS_KEY='beertasting_settings_v1';
 
-let beers=[],currentIndex=0,scores=[],sessionName='',apiKey='',lookupCache={};
+let beers=[],currentIndex=0,scores=[],sessionName='',lookupCache={};
 
 // ── SETTINGS ──
 function loadSettings(){
   try{
     const s=JSON.parse(localStorage.getItem(SETTINGS_KEY)||'{}');
     sessionName=s.sessionName||'My Tasting Session';
-    apiKey=s.apiKey||'';
     document.getElementById('badge-session-name').textContent=sessionName;
   }catch(e){}
 }
@@ -361,9 +356,8 @@ function openSettings(){
   try{
     const s=JSON.parse(localStorage.getItem(SETTINGS_KEY)||'{}');
     document.getElementById('settings-session-name').value=s.sessionName||'';
-    document.getElementById('settings-api-key').value=s.apiKey||'';
-    checkSettingsKey();
   }catch(e){}
+  if(window.AppKeys)window.AppKeys.mountSettings(document.getElementById('keyMount'));
   document.getElementById('settings-modal').classList.add('open');
 }
 
@@ -371,23 +365,19 @@ function closeSettings(){
   document.getElementById('settings-modal').classList.remove('open');
 }
 
-function checkSettingsKey(){
-  const val=document.getElementById('settings-api-key').value.trim();
-  const status=document.getElementById('settings-api-status');
-  if(val.startsWith('sk-ant-')&&val.length>20){status.textContent='✓ Ready — beer lookup enabled';status.className='api-status ok';}
-  else if(val.length>0){status.textContent='Looks invalid — double-check your key';status.className='api-status none';}
-  else{status.textContent='Not set — beer lookup will be unavailable';status.className='api-status none';}
-}
-
 function saveSettings(){
   const sName=document.getElementById('settings-session-name').value.trim()||'My Tasting Session';
-  const key=document.getElementById('settings-api-key').value.trim();
-  const s={sessionName:sName,apiKey:key};
+  const s={sessionName:sName};
   localStorage.setItem(SETTINGS_KEY,JSON.stringify(s));
-  sessionName=sName; apiKey=key;
+  sessionName=sName;
   document.getElementById('badge-session-name').textContent=sessionName;
   closeSettings();
 }
+
+window.addEventListener('appaday:keychange',()=>{
+  const b=document.getElementById('lookup-btn');
+  if(b&&beers.length&&!lookupCache[currentIndex])b.style.display=(window.AppKeys&&window.AppKeys.has())?'flex':'none';
+});
 
 // ── URL SHARE IMPORT ──
 window.addEventListener('load',()=>{
@@ -469,7 +459,7 @@ function loadBeer(idx){
   updateTotal();updateDots(idx);
   const panel=document.getElementById('lookup-panel');
   const btn=document.getElementById('lookup-btn');
-  const hasKey=apiKey&&apiKey.startsWith('sk-ant-')&&apiKey.length>20;
+  const hasKey=!!(window.AppKeys&&window.AppKeys.has());
   if(lookupCache[idx]){panel.classList.add('visible');document.getElementById('lookup-content').innerHTML=lookupCache[idx];btn.style.display='none';}
   else{panel.classList.remove('visible');btn.style.display=hasKey?'flex':'none';btn.classList.remove('loading');document.getElementById('lookup-btn-text').textContent='Look up this beer with Claude';}
   document.getElementById('btn-next').textContent=idx===beers.length-1?'See Results →':'Next Beer →';
@@ -478,6 +468,8 @@ function loadBeer(idx){
 async function lookupBeer(){
   const beerName=beers[currentIndex];
   const btn=document.getElementById('lookup-btn');
+  const apiKey=window.AppKeys?await window.AppKeys.get():null;
+  if(!apiKey){document.getElementById('lookup-btn-text').textContent='Add your Claude API key with the gear button';return;}
   btn.classList.add('loading');document.getElementById('lookup-btn-text').textContent='Looking up…';
   try{
     const response=await fetch('https://api.anthropic.com/v1/messages',{
