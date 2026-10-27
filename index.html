@@ -10,6 +10,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <link rel="manifest" href="https://augustineiacopelli.github.io/appaday/manifests/023.webmanifest">
 <script src="https://augustineiacopelli.github.io/appaday/save.js" defer></script>
+<script src="https://augustineiacopelli.github.io/appaday/models.js"></script>
 <script src="https://augustineiacopelli.github.io/appaday/keys.js" data-app="023" data-legacy-key="beertasting_settings_v1:apiKey" data-accent="#289664" defer></script>
 <title>Beer Tasting Scorecard | AppADay 023</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
@@ -475,7 +476,7 @@ async function lookupBeer(){
     const response=await fetch('https://api.anthropic.com/v1/messages',{
       method:'POST',
       headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:400,
+      body:JSON.stringify({model:(window.AppModels ? window.AppModels.id('sonnet') : ''),max_tokens:400,
         system:'You are a knowledgeable craft beer sommelier. When given a beer or brewery name, provide a tasting guide in HTML. Structure it with these labeled lines, each on its own line using <br> after each one: <strong>Style:</strong> ...<br> <strong>ABV:</strong> ...<br> <strong>Appearance:</strong> ...<br> <strong>Aroma:</strong> ...<br> <strong>Flavor:</strong> ...<br> <strong>Mouthfeel:</strong> ...<br> <strong>Overall:</strong> ...<br> Then end with a <div class=\"lookup-sources\">Sources: followed by 1-3 hyperlinks to real authoritative sources (brewery website, BeerAdvocate, RateBeer, BJCP, CraftBeer.com) using <a href=\"URL\" target=\"_blank\">Name</a> format, then </div>. No preamble, no markdown, no backtick fences. Use only HTML.',
         messages:[{role:'user',content:'Tell me about: '+beerName}]})
     });
